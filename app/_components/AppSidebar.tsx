@@ -11,33 +11,33 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
+import { Calendar, Home, Inbox, Megaphone, Search, Settings, Wallet2 } from "lucide-react"
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 
 const items = [
     {
         title: "Home",
-        url: "#",
+        url: "/app",
         icon: Home,
     },
     {
-        title: "Inbox",
-        url: "#",
+        title: "Creative Tools",
+        url: "/creative-tools",
         icon: Inbox,
     },
     {
-        title: "Calendar",
+        title: "My Ads",
         url: "#",
-        icon: Calendar,
+        icon: Megaphone,
     },
     {
-        title: "Search",
+        title: "Upgrade",
         url: "#",
-        icon: Search,
+        icon: Wallet2,
     },
     {
-        title: "Settings",
+        title: "Profile",
         url: "#",
         icon: Settings,
     },
