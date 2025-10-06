@@ -14,6 +14,7 @@ import {
 import { Calendar, Home, Inbox, Megaphone, Search, Settings, Wallet2 } from "lucide-react"
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { Button } from '@/components/ui/button'
 
 const items = [
     {
@@ -63,7 +64,7 @@ export function AppSidebar() {
                                 // <SidebarMenuItem key={item.title} className='p-2'>
                                 //     <SidebarMenuButton asChild className=''>
                                 <a href={item.url} key={index} className={`p-2 text-lg flex gap-2 items-center
-                                 hover:bg-gray-100 rounded-lg ${path.includes(item.url) && 'bg-gray-200ß'}`}>
+                                 hover:bg-gray-100 hover:text-black rounded-lg ${path.includes(item.url) && 'bg-gray-200ß'}`}>
                                     <item.icon className='h-5 w-5' />
                                     <span>{item.title}</span>
                                 </a>
@@ -75,7 +76,9 @@ export function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
-                <h2 className='p-2 text-gray-400 text-sm'>Copyright @Tubeguruji</h2>
+                
+                <Button>Sign In</Button>
+                <h2 className='p-2 text-gray-400 text-sm'>Content here</h2>
             </SidebarFooter>
         </Sidebar>
     )

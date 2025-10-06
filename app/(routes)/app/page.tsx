@@ -1,9 +1,12 @@
 import React from 'react'
+import AiToolList from './_components/AiToolList'
 
-function Dashboard() {
+function AppHomePage() {
     return (
-        <div>Dashboard</div>
+        <div>
+            <AiToolList/>
+        </div>
     )
 }
 
-export default Dashboard
+export default AppHomePage
