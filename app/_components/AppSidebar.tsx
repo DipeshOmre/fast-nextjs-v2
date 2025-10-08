@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import {
     Sidebar,
     SidebarContent,
@@ -16,7 +16,8 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-
+import { auth } from '@/configs/firebaseConfig'
+import { User } from 'firebase/auth'
 const items = [
     {
         title: "Home",
@@ -47,6 +48,22 @@ const items = [
 
 export function AppSidebar() {
     const path = usePathname();
+    const [user, setUser] = useState<User | null>(null)
+    const handleLogout = async () => {
+        try {
+            await auth.signOut();
+            setUser(null);
+        } catch (error) {
+            // Optionally handle error
+            console.error("Logout failed", error);
+        }
+    };
+    useEffect(() => {
+            const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+                setUser(firebaseUser)
+            })
+            return () => unsubscribe()
+        }, [])
     return (
         <Sidebar>
             <SidebarHeader>
@@ -77,9 +94,26 @@ export function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
+                {!user?
                 <Link href={'/login'} >
                 <Button className='w-full'>Sign In</Button>
-                </Link>
+                </Link>:
+                <div className="flex items-center justify-between p-2">
+            <div className="flex items-center gap-2">
+                <Image
+                    src={'/prof.jpg'}
+                    alt="User Avatar"
+                    width={32}
+                    height={32}
+                    className="rounded-full"
+                />
+                <span className="text-sm font-medium">{user.displayName || "User"}</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+                Logout
+            </Button>
+        </div>
+}
                 <h2 className='p-2 text-gray-400 text-sm'>Content here</h2>
             </SidebarFooter>
         </Sidebar>
