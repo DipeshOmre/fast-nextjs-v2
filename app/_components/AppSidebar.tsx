@@ -15,6 +15,7 @@ import { Calendar, Home, Inbox, Megaphone, Search, Settings, Wallet2 } from "luc
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
 const items = [
     {
@@ -76,8 +77,9 @@ export function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
-                
-                <Button>Sign In</Button>
+                <Link href={'/login'} >
+                <Button className='w-full'>Sign In</Button>
+                </Link>
                 <h2 className='p-2 text-gray-400 text-sm'>Content here</h2>
             </SidebarFooter>
         </Sidebar>
