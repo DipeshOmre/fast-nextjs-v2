@@ -1,11 +1,13 @@
-import React from 'react'
+import React from "react";
+import Authentication from "@/app/_components/Authentication";
 
-const page = () => {
+const LoginPage = () => {
   return (
-    <div>
-      Login page
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+      <h1>Login</h1>
+      <Authentication />
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default LoginPage;
