@@ -1,6 +1,6 @@
 "use client"
 
-import { useUser } from "@clerk/nextjs";
+import { useAuthContext } from "@/hooks/useAuthContext";
 import axios from "axios";
 import React, { useEffect } from "react";
 
@@ -34,22 +34,19 @@ function safeErrorString(err: any) {
 }
 
 function Provider({ children }: { children: React.ReactNode }) {
-  const { user } = useUser();
+  const { user } = useAuthContext();
 
   async function createNewUser() {
     try {
       if (!user) return;
 
       const payload = {
-        clerkId: user.id,
-        name: user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
-        email:
-          user.primaryEmailAddress?.emailAddress ||
-          user.emailAddresses?.[0]?.emailAddress ||
-          null,
+        firebaseId: user.uid,
+        name: user.displayName || user.email?.split('@')[0] || "User",
+        email: user.email || null,
       };
 
-      if (!payload.clerkId || !payload.email) {
+      if (!payload.firebaseId || !payload.email) {
         console.warn("createNewUser: missing required fields, skipping API call", payload);
         return;
       }

@@ -2,20 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/configs/db";
 import { usersTable } from "@/configs/schema";
-import { currentUser } from "@clerk/nextjs/server";
+import { verifyFirebaseToken } from "@/lib/firebaseAdmin";
+import { extractTokenFromRequest } from "@/lib/firebaseAuth";
 
 export async function POST(req: NextRequest) {
     try {
-        const user = await currentUser();
+        // Extract token from request
+        const token = extractTokenFromRequest(req);
+        if (!token) {
+            return NextResponse.json(
+                { error: "No authentication token provided" },
+                { status: 401 }
+            );
+        }
 
-        if (!user || !user.primaryEmailAddress?.emailAddress) {
+        // Verify Firebase token
+        const decodedToken = await verifyFirebaseToken(token);
+        if (!decodedToken || !decodedToken.email) {
             return NextResponse.json(
                 { error: "Unauthorized or missing email address" },
                 { status: 401 }
             );
         }
 
-        const email = user.primaryEmailAddress.emailAddress;
+        const email = decodedToken.email;
 
         // Check if user already exists
         const existingUsers = await db
@@ -31,7 +41,7 @@ export async function POST(req: NextRequest) {
         const insertedUsers = await db
             .insert(usersTable)
             .values({
-                name: user.fullName ?? "",
+                name: decodedToken.name ?? "",
                 email: email,
             })
             .returning();

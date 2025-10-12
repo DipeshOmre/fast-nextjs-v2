@@ -1,18 +1,9 @@
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import React, { useEffect, useState } from 'react'
-import { auth } from '@/configs/firebaseConfig'
-import { User } from 'firebase/auth'
-
+import React from 'react'
+import { useAuthContext } from '@/hooks/useAuthContext'
 
 function AppHeader() {
-    const [user, setUser] = useState<User | null>(null)
-
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
-            setUser(firebaseUser)
-        })
-        return () => unsubscribe()
-    }, [])
+    const { user } = useAuthContext()
 
     return (
         <div className='p-4 shadow-sm flex items-center justify-between w-full'>

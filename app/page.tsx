@@ -1,22 +1,16 @@
 "use client"
-import Image from "next/image";
-
-import { SignIn, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function Home() {
-
-  const router =useRouter();
-  const { user } = useUser();
-  useEffect(() => {
-    router.replace('/app')
-  }, [])
+  const router = useRouter();
   
-  return (
-    <div>
-      
+  useEffect(() => {
+    // Automatically redirect to /app when the page loads
+    router.replace('/app');
+  }, [router]);
 
-    </div>
-  );
+  return (<div>
+
+  </div>); // Empty page - just redirects
 }

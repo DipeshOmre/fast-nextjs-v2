@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import {
     Sidebar,
     SidebarContent,
@@ -16,8 +16,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { auth } from '@/configs/firebaseConfig'
-import { User } from 'firebase/auth'
+import { useAuthContext } from '@/hooks/useAuthContext'
 const items = [
     {
         title: "Home",
@@ -48,22 +47,15 @@ const items = [
 
 export function AppSidebar() {
     const path = usePathname();
-    const [user, setUser] = useState<User | null>(null)
+    const { user, logout } = useAuthContext()
+    
     const handleLogout = async () => {
         try {
-            await auth.signOut();
-            setUser(null);
+            await logout();
         } catch (error) {
-            // Optionally handle error
             console.error("Logout failed", error);
         }
     };
-    useEffect(() => {
-            const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
-                setUser(firebaseUser)
-            })
-            return () => unsubscribe()
-        }, [])
     return (
         <Sidebar>
             <SidebarHeader>
