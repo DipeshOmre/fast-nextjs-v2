@@ -298,7 +298,7 @@ function Authentication() {
 
   {/* Error message */}
   {error && (
-    <div className="mt-4 px-3 py-2 rounded-md bg-red-50 border border-red-100 text-red-700 text-sm">
+    <div className="mt-4 px-3 py-2 rounded-md bg-red-50 border border-red-100 text-blue-400 text-sm">
       <strong className="sr-only">Error:</strong>
       <span>{error}</span>
     </div>

@@ -14,6 +14,8 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebaseClient';
 import { setAuthToken, clearAuthToken } from '@/lib/tokenManager';
+import { saveUserToFirestore } from '@/lib/services/userService';
+import { UserDataInput } from '@/lib/types/user';
 
 // Define the auth context type
 interface AuthContextType {
@@ -25,6 +27,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateUserProfile: (data: { displayName?: string; photoURL?: string }) => Promise<void>;
+  saveCurrentUserToFirestore: () => Promise<void>;
 }
 
 // Create the context
@@ -35,15 +38,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to save user data to Firestore
+  const saveUserData = async (user: User) => {
+    try {
+      const userData: UserDataInput = {
+        uid: user.uid,
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+      };
+
+      const result = await saveUserToFirestore(userData);
+      
+      if (result.success) {
+        console.log('User data saved successfully:', result.data);
+      } else {
+        console.error('Failed to save user data:', result.error);
+      }
+    } catch (error) {
+      console.error('Error saving user data:', error);
+    }
+  };
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
       
-      // Handle token management asynchronously to not block the auth state
+      // Handle token management and user data saving asynchronously
       if (user) {
-        // Don't await this to prevent blocking the auth state change
+        // Don't await these to prevent blocking the auth state change
         setAuthToken(user).catch(console.error);
+        saveUserData(user).catch(console.error);
       } else {
         clearAuthToken();
       }
@@ -55,12 +81,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       setLoading(true);
+      console.log('Starting Google sign-in...');
+      
+      // Check if Firebase is properly configured
+      if (!auth) {
+        throw new Error('Firebase Auth is not initialized');
+      }
+      
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      await signInWithPopup(auth, provider);
+      
+      console.log('Calling signInWithPopup...');
+      const result = await signInWithPopup(auth, provider);
+      console.log('Google sign-in successful:', result.user.email);
+      
       // The onAuthStateChanged will handle setting loading to false
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google sign-in error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
       setLoading(false); // Make sure to reset loading state on error
       throw error;
     }
@@ -125,6 +164,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const saveCurrentUserToFirestore = async () => {
+    if (!user) {
+      throw new Error('No user is currently signed in');
+    }
+    await saveUserData(user);
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -134,6 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     resetPassword,
     updateUserProfile,
+    saveCurrentUserToFirestore,
   };
 
   return (

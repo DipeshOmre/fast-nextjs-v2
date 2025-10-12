@@ -16,6 +16,19 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
+// Debug: Check if Firebase config is properly loaded
+if (typeof window !== 'undefined') {
+  console.log('Firebase Config:', {
+    apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
+    authDomain: firebaseConfig.authDomain ? 'Set' : 'Missing',
+    projectId: firebaseConfig.projectId ? 'Set' : 'Missing',
+    storageBucket: firebaseConfig.storageBucket ? 'Set' : 'Missing',
+    messagingSenderId: firebaseConfig.messagingSenderId ? 'Set' : 'Missing',
+    appId: firebaseConfig.appId ? 'Set' : 'Missing',
+    measurementId: firebaseConfig.measurementId ? 'Set' : 'Missing',
+  });
+}
+
 // Initialize Firebase (prevent multiple initializations)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
