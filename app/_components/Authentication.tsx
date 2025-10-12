@@ -96,6 +96,7 @@
 import React, { useState } from "react";
 import { useAuthContext } from "@/hooks/useAuthContext";
 import Image from "next/image";
+import Link from "next/link";
 
 function Authentication() {
   const { user, signInWithGoogle, logout } = useAuthContext();
@@ -236,9 +237,18 @@ function Authentication() {
           Profile
         </button>
       </div>
+      <Link href="/" passHref>
+          <button className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition">
+            Go to Home
+          </button>
+        </Link>
     </div>
   ) : (
     <div className="flex flex-col items-center gap-4">
+
+
+
+
       <div className="flex items-center justify-center w-20 h-20 rounded-full bg-indigo-50 border border-indigo-100">
         {/* Google icon */}
         <svg className="w-10 h-10" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
@@ -281,6 +291,8 @@ function Authentication() {
       >
         Sign in with email instead
       </button>
+
+      
     </div>
   )}
 
