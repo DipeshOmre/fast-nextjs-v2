@@ -60,7 +60,7 @@ export function AppSidebar() {
         <Sidebar>
             <SidebarHeader>
                 <div className='p-4'>
-                    <Image src={'./logo.svg'} alt='logo' width={100} height={100}
+                    <Image src={'/logo.svg'} alt='logo' width={100} height={100}
                         className='w-full h-full' />
                     <h2 className='text-sm text-gray-400 text-center'>Build Awesome</h2>
                 </div>

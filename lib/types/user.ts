@@ -15,6 +15,9 @@ export interface UserDataInput {
   displayName?: string | null;
   email?: string | null;
   photoURL?: string | null;
+  createdAt?: Date;
+  credits: number;
+
 }
 
 export interface UserServiceResponse {

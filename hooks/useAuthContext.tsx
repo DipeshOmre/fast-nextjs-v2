@@ -46,6 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         displayName: user.displayName,
         email: user.email,
         photoURL: user.photoURL,
+        createdAt: new Date(),
+        credits:20
       };
 
       const result = await saveUserToFirestore(userData);
