@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images:{
+    remotePatterns: [{protocol: "https",hostname: "ik.imagekit.io"}]
+  },
   webpack: (config, { isServer }) => {
     // Exclude firebase-admin from client-side bundle
     if (!isServer) {

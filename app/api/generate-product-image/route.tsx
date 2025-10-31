@@ -30,6 +30,8 @@ import {
   HarmBlockThreshold,
   Part,
 } from '@google/generative-ai';
+import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { db } from '@/lib/firebaseServer';
 
 // --- Gemini API Configuration ---
 
@@ -95,16 +97,35 @@ async function urlToImagePart(url: string): Promise<Part> {
 
 export async function POST(req: NextRequest) {
   try {
+
     // --- Step 1: Get File from Request ---
     const formData = await req.formData();
     const file = formData.get('file') as File;
-
+    const description = formData.get('description');
+    const size = formData.get('size');
+    const userEmail = formData.get('userEmail');
+    const userRef = collection(db, 'users');
+    const q = query(userRef, where('userEmail', '==', userEmail));
+    const querySnapshot = await getDocs(q);
+    const userDoc = querySnapshot.docs[0];
+    const userInfo = userDoc.data();
+    console.log(userEmail);
+    console.log(size);
+    console.log(description);
+    const docId = Date.now().toString();
+    await setDoc(
+      doc(db, "user-ads", docId),
+      {
+        userEmail: userEmail,
+        status: 'pending',
+        description: description,
+        size: size,
+      }
+    );
     if (!file) {
       return NextResponse.json({ error: 'No file found in form data.' }, { status: 400 });
     }
-    // You can still get these if needed, though they aren't used in the prompt
-    // const description = formData.get('description');
-    // const size = formData?.get('size');
+
 
     // --- Step 2: Upload to ImageKit.io ---
     const arrayBuffer = await file.arrayBuffer();
@@ -125,13 +146,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const imageUrl = imageKitRef.url;
+    const productImageUrl = imageKitRef.url;
     // console.log('Image uploaded to ImageKit:', imageUrl);
 
     // --- Step 3: Fetch Image and Send to Gemini ---
     let imagePart: Part;
     try {
-      imagePart = await urlToImagePart(imageUrl);
+      imagePart = await urlToImagePart(productImageUrl);
     } catch (fetchError: any) {
       console.error('Error fetching image from ImageKit URL:', fetchError.message);
       return NextResponse.json(
@@ -186,7 +207,7 @@ export async function POST(req: NextRequest) {
     // ,// Send messages with image_url + text
     const requestBody = {
       model: OPENROUTER_MODEL,
-      input: `${promptText}\n\nImage: ${imageUrl}`,
+      input: `${promptText}\n\nImage: ${productImageUrl}`,
       // optional: temperature, max_tokens, response_format, etc.
     };
 
@@ -220,7 +241,7 @@ export async function POST(req: NextRequest) {
     // orData is the parsed OpenRouter response (you already have it)
 
     let returnedText: string | null = null;
-    let finalImageUrl: string | null = null;
+    let finalProductImageUrl: string | null = null;
 
     // 1) Extract text from reasoning entry if present
     if (Array.isArray(orData.output)) {
@@ -304,8 +325,8 @@ export async function POST(req: NextRequest) {
 
     // 4) Validate and upload (prefer provider URL, else upload base64)
     if (imageUrlFromProvider) {
-      finalImageUrl = imageUrlFromProvider;
-      console.log('Using provider image URL from OpenRouter:', finalImageUrl);
+      finalProductImageUrl = imageUrlFromProvider;
+      console.log('Using provider image URL from OpenRouter:', finalProductImageUrl);
     } else if (imageBase64) {
       // safety: ensure non-empty
       const cleaned = String(imageBase64).trim();
@@ -317,12 +338,12 @@ export async function POST(req: NextRequest) {
       // Upload to ImageKit (file should be raw base64 WITHOUT data: prefix)
       try {
         const uploadResp = await imagekit.upload({
-          file: cleaned,
+          file: `data:image/png;base64,${cleaned}`,
           fileName: `openrouter_out_${Date.now()}.png`,
           isPublished: true,
         });
-        finalImageUrl = uploadResp.url;
-        console.log('Uploaded generated image to ImageKit:', finalImageUrl);
+        finalProductImageUrl = uploadResp?.url;
+        console.log('Uploaded generated image to ImageKit:', finalProductImageUrl);
       } catch (uErr: any) {
         console.error('ImageKit upload failed:', uErr);
         return NextResponse.json({ parsedPrompts, openrouterError: 'ImageKit upload failed' }, { status: 500 });
@@ -335,17 +356,32 @@ export async function POST(req: NextRequest) {
     // 5) Final response
     const openrouterResult = {
       text: returnedText,
-      imageUrl: finalImageUrl,
+      imageUrl: finalProductImageUrl,
       raw: orData,
     };
 
+    //Save to the firestore database
+    console.log({
+      userEmail,
+      finalProductImageUrl,
+      productImageUrl,
+      description,
+      size
+    });
+
+    //update Doc
+    await updateDoc(doc(db, "user-ads", docId), {
+      finalProductImageUrl: finalProductImageUrl,
+      productImageUrl: productImageUrl,
+      status: 'completed',
+      userInfo: userInfo?.credits - 5
+    })
+
     console.log('OpenRouter parsed result:', openrouterResult);
-    return NextResponse.json({ parsedPrompts, openrouterResult }, { status: 200 });
+    return NextResponse.json(finalProductImageUrl);
 
 
-    // Send the final JSON object to the client
-    // console.log(parsedPrompts);
-    // return NextResponse.json(parsedPrompts, { status: 200 });
+
 
   } catch (error: any) {
     // General error handler

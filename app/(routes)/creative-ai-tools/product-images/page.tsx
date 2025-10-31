@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import PreviewResult from '../_components/PreviewResult'
 import Forminput from '../_components/Forminput'
 import axios from 'axios'
+import { useAuthContext } from '@/hooks/useAuthContext'
 type FormData={
   file?:File|undefined,
   description:string,
@@ -12,6 +13,7 @@ type FormData={
 const page = () => {
   const [formData, setFormData] = useState<FormData>()
   const [loading,setLoading]=useState(false);
+  const {user}=useAuthContext();
   const onHandleInputChange=(field:string,value:string)=>{
     setFormData((prev:any)=>(
       {
@@ -37,11 +39,14 @@ const page = () => {
       formData_.append('file',formData?.file);
       formData_.append('description',formData?.description??'');
       formData_?.append('size',formData?.size??'1028x1028');
+      formData_?.append('userEmail',user?.email??'');
+      console.log(user?.email)
+
 
 
       // Make api call
       const result=await axios.post('/api/generate-product-image',formData_)
-      console.log(result.data);
+      console.log("result data :",result.data);
       setLoading(false);
   }
   return (
@@ -53,7 +58,7 @@ const page = () => {
                 onGenerate={onGenerate}
                 loading={loading}/>
             </div>
-            <div className='md:grid-cols-2'>
+            <div className='md:col-span-2'>
               <PreviewResult/>
             </div>
           </div>

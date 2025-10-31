@@ -36,7 +36,7 @@ const Forminput = ({ onHandleInputChange,onGenerate,loading }: Props) => {
         setPreview(URL.createObjectURL(file));
     }
     return (
-        <div>
+        <div className='p-5 rounded-2xl border'>
             <h2 className='font-semibold'>
                 1. Upload Product Image
             </h2>
@@ -56,7 +56,7 @@ const Forminput = ({ onHandleInputChange,onGenerate,loading }: Props) => {
                 <input type="file" id='imageUpload' className='hidden' onChange={(e) => onFileSelect(e.target.files)} />
                 <div>
                     <h2 className='opacity-40 text-center mt-3'>Select Sample products to try</h2>
-                    <div className='flex gap-5 items-center '>
+                    <div className='flex gap-5 items-center flex-wrap'>
                         {sampleProducts.map((product, index) => (
                             <Image src={product} alt='product' width={60} height={60} key={index} className='w-[60px] h-[60px] rounded-lg cursor-pointer hover:scale-105 transition-all' onClick={() => { setPreview(product); onHandleInputChange('imageUrl', product) }} />
                         ))}
