@@ -1,0 +1,26 @@
+<svg width="250" height="80" viewBox="0 0 250 80" xmlns="http://www.w3.org/2000/svg">
+  <title>AdGenie Logo - Shape + Text</title>
+  <defs>
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#696a6b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    </linearGradient>
+    <style>
+      .adgenie-text {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 40px;
+        font-weight: 700;
+        fill: #007DFC; /* White text for contrast */
+        dominant-baseline: middle;
+        text-anchor: middle;
+      }
+      .adgenie-shape {
+        fill: url(#blueGradient); /* Gradient blue for a modern look */
+      }
+    </style>
+  </defs>
+
+  <path class="adgenie-shape" d="M 20 40 C 30 10, 80 10, 90 40 C 100 70, 50 70, 40 50 L 40 40 C 50 30, 80 30, 90 40 L 220 40 C 210 10, 160 10, 150 40 C 140 70, 190 70, 200 50 L 200 40 C 190 30, 160 30, 150 40 Z" transform="translate(0, 0)"/>
+
+  <text x="125" y="40" class="adgenie-text">AdGenie</text>
+</svg>

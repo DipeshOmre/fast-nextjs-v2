@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     const q = query(userRef, where('userEmail', '==', userEmail));
     const querySnapshot = await getDocs(q);
     const userDoc = querySnapshot.docs[0];
-    const userInfo = userDoc.data();
+    const userInfo = userDoc?.data();
     console.log(userEmail);
     console.log(size);
     console.log(description);
