@@ -205,180 +205,116 @@ export async function POST(req: NextRequest) {
 
 
     // ,// Send messages with image_url + text
-    const requestBody = {
-      model: OPENROUTER_MODEL,
-      input: `${promptText}\n\nImage: ${productImageUrl}`,
-      // optional: temperature, max_tokens, response_format, etc.
-    };
-
-    console.log('Calling OpenRouter with body preview:', JSON.stringify(requestBody).slice(0, 1000));
-    const orRes = await fetch('https://openrouter.ai/api/v1/responses', {
+    const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${OPENROUTER_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image-preview',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: promptText
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: productImageUrl
+                }
+              }
+            ],
+          },
+        ],
+        modalities: ['image', 'text'],
+        max_tokens: 1000,
+      }),
     });
+    const orJs = await orRes.json();
+    // console.log('OpenRouter Response:', JSON.stringify(orJs, null, 2));
+    // The generated image will be in the assistant message
+    if (orJs.choices) {
+      // console.log('Generated message from OpenRouter:', message);
+      let finalProductImageUrl = '';
+      let returnedText = '';
 
-    const orText = await orRes.text();
-    // try parse JSON (some responses may be text)
-    let orData: any;
-    try {
-      orData = JSON.parse(orText);
-    } catch (e) {
-      orData = orText;
+      // extract base64 image
+      const message = orJs?.choices?.[0]?.message;
+      if (message?.images?.length > 0) {
+        const imgData = message.images[0].image_url.url; // base64 with prefix
+        console.log("Raw Base64 from OpenRouter:", imgData.substring(0, 50) + "...");
+
+        // remove prefix 'data:image/png;base64,'
+        const base64Image = imgData.replace(/^data:image\/\w+;base64,/, "");
+
+        // upload to ImageKit
+        try {
+          const uploaded = await imagekit.upload({
+            file: base64Image,
+            fileName: `generated_${Date.now()}.png`,
+            isPublished: true,
+          });
+
+          finalProductImageUrl = uploaded.url;
+          console.log("Uploaded Final Image URL:", finalProductImageUrl);
+          await updateDoc(doc(db, "user-ads", docId), {
+            finalProductImageUrl,
+            productImageUrl,
+            status: 'completed',
+            userInfo: userInfo?.credits - 5
+          });
+
+          return NextResponse.json(finalProductImageUrl);
+
+        } catch (e: any) {
+          console.error("ImageKit Upload Failed:", e.message);
+        }
+      }
+
     }
-    console.log('OpenRouter raw response:', orData);
-    // continue parsing orData to extract text + image...
-    if (!orRes.ok || (orData && orData.success === false) || orData?.error) {
-      console.error('OpenRouter returned error:', orData);
-      return NextResponse.json({ parsedPrompts, openrouterError: orData }, { status: 500 });
-    }
+
+
 
     // --- Extract text + images from different possible shapes ---
     // --- PARSE OpenRouter response and upload a single image to ImageKit ---
     // orData is the parsed OpenRouter response (you already have it)
 
-    let returnedText: string | null = null;
-    let finalProductImageUrl: string | null = null;
 
-    // 1) Extract text from reasoning entry if present
-    if (Array.isArray(orData.output)) {
-      const reasoning = orData.output.find((o: any) => o?.type === 'reasoning');
-      if (reasoning) {
-        if (typeof reasoning.encrypted_content === 'string' && reasoning.encrypted_content.trim()) {
-          returnedText = reasoning.encrypted_content;
-        } else if (Array.isArray(reasoning.summary) && reasoning.summary.length > 0) {
-          returnedText = String(reasoning.summary[0]);
-        }
-      }
-    }
+    // Upload to ImageKit (file should be raw base64 WITHOUT data: prefix)
 
-    // 2) Extract image result from image_generation_call entry
-    let imageResult: any = null;
-    if (Array.isArray(orData.output)) {
-      const imgCall = orData.output.find((o: any) => o?.type === 'image_generation_call' && o?.status === 'completed');
-      if (imgCall) imageResult = imgCall.result;
-    }
+    // let finalProductImageUrl = '';
+    // let returnedText = '';
+    // // 5) Final response
+    // const openrouterResult = {
+    //   text: returnedText,
+    //   imageUrl: finalProductImageUrl,
+    //   raw: orJs,
+    // };
 
-    if (!imageResult) {
-      console.error('No image_generation_call.result found in OpenRouter response.');
-      return NextResponse.json({ parsedPrompts, openrouterError: 'No image_generation_call result' }, { status: 500 });
-    }
+    // //Save to the firestore database
+    // console.log({
+    //   userEmail,
+    //   finalProductImageUrl,
+    //   productImageUrl,
+    //   description,
+    //   size
+    // });
 
-    // 3) imageResult may be a data URI string or JSON. Handle both:
-    // If it's a JSON string, parse it. If it's a data URI, extract base64.
-    let imageBase64: string | null = null;
-    let imageUrlFromProvider: string | null = null;
+    // //update Doc
+    // await updateDoc(doc(db, "user-ads", docId), {
+    //   finalProductImageUrl: finalProductImageUrl,
+    //   productImageUrl: productImageUrl,
+    //   status: 'completed',
+    //   userInfo: userInfo?.credits - 5
+    // })
 
-    if (typeof imageResult === 'string') {
-      // common case in your sample: data:image/png;base64,AAA...
-      if (imageResult.startsWith('data:image/')) {
-        const commaIndex = imageResult.indexOf(',');
-        if (commaIndex >= 0) {
-          imageBase64 = imageResult.slice(commaIndex + 1);
-        }
-      } else {
-        // try parse JSON string
-        try {
-          const parsed = JSON.parse(imageResult);
-          // look for parsed.images[0].b64_json or .url or parsed.data etc.
-          if (Array.isArray(parsed.images) && parsed.images[0]) {
-            if (parsed.images[0].b64_json) imageBase64 = parsed.images[0].b64_json.replace(/^data:image\/\w+;base64,/, '');
-            else if (parsed.images[0].url) imageUrlFromProvider = parsed.images[0].url;
-          }
-          if (!imageBase64 && Array.isArray(parsed.data) && parsed.data[0]) {
-            if (parsed.data[0].b64_json) imageBase64 = parsed.data[0].b64_json.replace(/^data:image\/\w+;base64,/, '');
-            else if (parsed.data[0].url) imageUrlFromProvider = parsed.data[0].url;
-          }
-          if (!imageBase64 && !imageUrlFromProvider && parsed?.b64_json) {
-            imageBase64 = parsed.b64_json.replace(/^data:image\/\w+;base64,/, '');
-          }
-          if (!imageBase64 && !imageUrlFromProvider && parsed?.image_url) {
-            imageUrlFromProvider = parsed.image_url;
-          }
-        } catch (e) {
-          // not JSON — and not data URI
-          console.warn('imageResult is string but not data URI nor JSON.');
-        }
-      }
-    } else if (typeof imageResult === 'object' && imageResult !== null) {
-      // object case
-      if (Array.isArray(imageResult.images) && imageResult.images[0]) {
-        const first = imageResult.images[0];
-        if (first?.b64_json) imageBase64 = String(first.b64_json).replace(/^data:image\/\w+;base64,/, '');
-        else if (first?.url) imageUrlFromProvider = first.url;
-      }
-      if (!imageBase64 && Array.isArray(imageResult.data) && imageResult.data[0]) {
-        const first = imageResult.data[0];
-        if (first?.b64_json) imageBase64 = String(first.b64_json).replace(/^data:image\/\w+;base64,/, '');
-        else if (first?.url) imageUrlFromProvider = first.url;
-      }
-      if (!imageBase64 && !imageUrlFromProvider && imageResult?.b64_json) {
-        imageBase64 = String(imageResult.b64_json).replace(/^data:image\/\w+;base64,/, '');
-      }
-      if (!imageBase64 && !imageUrlFromProvider && imageResult?.image_url) {
-        imageUrlFromProvider = imageResult.image_url;
-      }
-    }
-
-    // 4) Validate and upload (prefer provider URL, else upload base64)
-    if (imageUrlFromProvider) {
-      finalProductImageUrl = imageUrlFromProvider;
-      console.log('Using provider image URL from OpenRouter:', finalProductImageUrl);
-    } else if (imageBase64) {
-      // safety: ensure non-empty
-      const cleaned = String(imageBase64).trim();
-      if (!cleaned) {
-        console.error('Extracted base64 is empty.');
-        return NextResponse.json({ parsedPrompts, openrouterError: 'Empty base64 image returned' }, { status: 500 });
-      }
-
-      // Upload to ImageKit (file should be raw base64 WITHOUT data: prefix)
-      try {
-        const uploadResp = await imagekit.upload({
-          file: `data:image/png;base64,${cleaned}`,
-          fileName: `openrouter_out_${Date.now()}.png`,
-          isPublished: true,
-        });
-        finalProductImageUrl = uploadResp?.url;
-        console.log('Uploaded generated image to ImageKit:', finalProductImageUrl);
-      } catch (uErr: any) {
-        console.error('ImageKit upload failed:', uErr);
-        return NextResponse.json({ parsedPrompts, openrouterError: 'ImageKit upload failed' }, { status: 500 });
-      }
-    } else {
-      console.error('No image URL or base64 could be extracted from imageResult.');
-      return NextResponse.json({ parsedPrompts, openrouterError: 'Could not extract image' }, { status: 500 });
-    }
-
-    // 5) Final response
-    const openrouterResult = {
-      text: returnedText,
-      imageUrl: finalProductImageUrl,
-      raw: orData,
-    };
-
-    //Save to the firestore database
-    console.log({
-      userEmail,
-      finalProductImageUrl,
-      productImageUrl,
-      description,
-      size
-    });
-
-    //update Doc
-    await updateDoc(doc(db, "user-ads", docId), {
-      finalProductImageUrl: finalProductImageUrl,
-      productImageUrl: productImageUrl,
-      status: 'completed',
-      userInfo: userInfo?.credits - 5
-    })
-
-    console.log('OpenRouter parsed result:', openrouterResult);
-    return NextResponse.json(finalProductImageUrl);
+    // console.log('OpenRouter parsed result:', openrouterResult);
+    console.log('No valid image generated from OpenRouter api.');
+    return NextResponse.json({ message: 'Api problem' });
 
 
 
