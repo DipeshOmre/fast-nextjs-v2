@@ -10,7 +10,7 @@ type FormData = {
   size: string,
   imageURL?: string
 }
-const ProductImages = ({title}:any) => {
+const ProductImages = ({title,enableAvatar}:any) => {
   const [formData, setFormData] = useState<FormData>()
   const [loading, setLoading] = useState(false);
   const { user } = useAuthContext();
@@ -56,7 +56,8 @@ const ProductImages = ({title}:any) => {
         <div>
           <Forminput onHandleInputChange={(field: string, value: string) => onHandleInputChange(field, value)}
             onGenerate={onGenerate}
-            loading={loading} />
+            loading={loading}
+            enableAvatar={enableAvatar} />
         </div>
         <div className='md:col-span-2'>
           <PreviewResult />

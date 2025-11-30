@@ -20,7 +20,7 @@ const AiTools = [
     name: 'AI Products with Avatar',
     desc: 'Bring your products to life with AI avatars',
     banner: '/product-avatar.png',
-    path: '/',
+    path: '/creative-ai-tools/product-avatar',
   }
 ]
 function AiToolList() {

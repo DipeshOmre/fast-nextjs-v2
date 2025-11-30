@@ -18,12 +18,35 @@ const sampleProducts = [
     '/burger.png',
     '/ice-creame.png',
 ]
+const avatar=[
+    {
+        name:'Avatar 1',
+        imageUrl:'https://ik.imagekit.io/67ziqcwhn/Avatar/av5.webp?updatedAt=1762103261069'
+    },
+    {
+        name:'Avatar 2',
+        imageUrl:'https://ik.imagekit.io/67ziqcwhn/Avatar/av1.webp?updatedAt=1762102842535'
+    },
+    {
+        name:'Avatar 3',
+        imageUrl:'https://ik.imagekit.io/67ziqcwhn/Avatar/av3.webp?updatedAt=1762102842379'
+    },
+    {
+        name:'Avatar 4',
+        imageUrl:'https://ik.imagekit.io/67ziqcwhn/Avatar/av4.webp?updatedAt=1762102840039'
+    },
+    {
+        name:'Avatar 5',
+        imageUrl:'https://ik.imagekit.io/67ziqcwhn/Avatar/av2.webp?updatedAt=1762102836926'
+    }
+]
 type Props = {
     onHandleInputChange: any,
     onGenerate:any,
-    loading:boolean
+    loading:boolean,
+    enableAvatar?:boolean
 }
-const Forminput = ({ onHandleInputChange,onGenerate,loading }: Props) => {
+const Forminput = ({ onHandleInputChange,onGenerate,loading,enableAvatar}: Props) => {
     const [preview, setPreview] = useState<string | null>(null);
     const onFileSelect = (files: FileList | null) => {
         if (!files || files?.length == 0) return;
@@ -54,15 +77,24 @@ const Forminput = ({ onHandleInputChange,onGenerate,loading }: Props) => {
                     }
                 </label>
                 <input type="file" id='imageUpload' className='hidden' onChange={(e) => onFileSelect(e.target.files)} />
-                <div>
+
+                {!enableAvatar && <div>
                     <h2 className='opacity-40 text-center mt-3'>Select Sample products to try</h2>
                     <div className='flex gap-5 items-center flex-wrap'>
                         {sampleProducts.map((product, index) => (
                             <Image src={product} alt='product' width={60} height={60} key={index} className='w-[60px] h-[60px] rounded-lg cursor-pointer hover:scale-105 transition-all' onClick={() => { setPreview(product); onHandleInputChange('imageUrl', product) }} />
                         ))}
                     </div>
-                </div>
+                </div>}
+
             </div>
+            {enableAvatar &&
+            <div className='mt-8'>
+                <h2 className='font-semibold'>
+                    2. Enter Product description
+                </h2>
+                
+            </div>}
             <div className='mt-8'>
                 <h2 className='font-semibold'>
                     2. Enter Product description

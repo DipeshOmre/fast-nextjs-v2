@@ -29,6 +29,7 @@
     "next": "15.2.3",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
+    "replicate": "^1.4.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7"
   },

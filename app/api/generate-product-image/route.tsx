@@ -265,7 +265,8 @@ export async function POST(req: NextRequest) {
             finalProductImageUrl,
             productImageUrl,
             status: 'completed',
-            userInfo: userInfo?.credits - 5
+            userInfo: userInfo?.credits - 5,
+            imageToVideoPrompt:parsedPrompts?.imageToVideo
           });
 
           return NextResponse.json(finalProductImageUrl);
