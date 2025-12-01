@@ -1,8 +1,8 @@
 "use client"
 import { Textarea } from '@/components/ui/textarea';
-import { ImagePlus, ImagePlusIcon, Loader2Icon, Monitor, Smartphone, Sparkles, Square } from 'lucide-react'
+import { Divide, ImagePlus, ImagePlusIcon, Loader2Icon, Monitor, Smartphone, Sparkles, Square } from 'lucide-react'
 import Image from 'next/image';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
     Select,
     SelectContent,
@@ -18,7 +18,9 @@ const sampleProducts = [
     '/burger.png',
     '/ice-creame.png',
 ]
-const avatar=[
+
+
+const AvatarList=[
     {
         name:'Avatar 1',
         imageUrl:'https://ik.imagekit.io/67ziqcwhn/Avatar/av5.webp?updatedAt=1762103261069'
@@ -44,10 +46,12 @@ type Props = {
     onHandleInputChange: any,
     onGenerate:any,
     loading:boolean,
-    enableAvatar?:boolean
+    enableAvatar:boolean
 }
+
 const Forminput = ({ onHandleInputChange,onGenerate,loading,enableAvatar}: Props) => {
     const [preview, setPreview] = useState<string | null>(null);
+    const [selectedAvatar, setSelectedAvatar] = useState<string>()
     const onFileSelect = (files: FileList | null) => {
         if (!files || files?.length == 0) return;
         const file = files[0];
@@ -58,6 +62,8 @@ const Forminput = ({ onHandleInputChange,onGenerate,loading,enableAvatar}: Props
         onHandleInputChange('file', file)
         setPreview(URL.createObjectURL(file));
     }
+    
+    
     return (
         <div className='p-5 rounded-2xl border'>
             <h2 className='font-semibold'>
@@ -77,8 +83,9 @@ const Forminput = ({ onHandleInputChange,onGenerate,loading,enableAvatar}: Props
                     }
                 </label>
                 <input type="file" id='imageUpload' className='hidden' onChange={(e) => onFileSelect(e.target.files)} />
+                   
+                {!enableAvatar &&  <div>
 
-                {!enableAvatar && <div>
                     <h2 className='opacity-40 text-center mt-3'>Select Sample products to try</h2>
                     <div className='flex gap-5 items-center flex-wrap'>
                         {sampleProducts.map((product, index) => (
@@ -90,9 +97,15 @@ const Forminput = ({ onHandleInputChange,onGenerate,loading,enableAvatar}: Props
             </div>
             {enableAvatar &&
             <div className='mt-8'>
-                <h2 className='font-semibold'>
-                    2. Enter Product description
+                <h2 className='font-semibold'>  
+                    Select Avatar
                 </h2>
+                <div className='grid grid-cols-4 gap-3 mt-2'>
+                    {AvatarList.map((avatar,index)=>{
+                        return <Image key={index} src={avatar.imageUrl} alt={avatar.name} width={200} height={200} className={`rounded-lg h-[100px] w-[80px] cursor-pointer object-cover ${avatar.name==selectedAvatar && 'border border-primary'}`}onClick={()=>{setSelectedAvatar(avatar.name);onHandleInputChange('avatar',avatar.imageUrl)}}/>
+                        
+                    })}
+                </div>
                 
             </div>}
             <div className='mt-8'>

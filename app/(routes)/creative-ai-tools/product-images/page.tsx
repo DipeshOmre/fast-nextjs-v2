@@ -1,19 +1,28 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import PreviewResult from '../_components/PreviewResult'
 import Forminput from '../_components/Forminput'
 import axios from 'axios'
 import { useAuthContext } from '@/hooks/useAuthContext'
+import { useRouter } from 'next/navigation'
 type FormData = {
   file?: File | undefined,
   description: string,
   size: string,
-  imageURL?: string
+  imageURL?: string,
+  avatar?:string
 }
 const ProductImages = ({title,enableAvatar}:any) => {
   const [formData, setFormData] = useState<FormData>()
   const [loading, setLoading] = useState(false);
   const { user } = useAuthContext();
+  const router=useRouter();
+  useEffect(() => {
+    if(!user){
+      router.push('/login');
+    }
+  }, [user])
+  
   const onHandleInputChange = (field: string, value: string) => {
     setFormData((prev: any) => (
       {
@@ -40,6 +49,7 @@ const ProductImages = ({title,enableAvatar}:any) => {
     formData_.append('description', formData?.description ?? '');
     formData_?.append('size', formData?.size ?? '1028x1028');
     formData_?.append('userEmail', user?.email ?? '');
+    formData_?.append('avatar', formData?.avatar ?? '');    
     console.log(user?.email)
 
 

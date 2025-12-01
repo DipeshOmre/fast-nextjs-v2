@@ -7,7 +7,7 @@ import { Download, Loader2Icon, LoaderCircle, Play, Sparkles } from 'lucide-reac
 import Image from 'next/image';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react'
-type PreviewProduct = {
+export type PreviewProduct = {
   id: string,
   finalProductImageUrl: string,
   productImageUrl: string,

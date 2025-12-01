@@ -50,6 +50,19 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const USER_PROMPT =
   "Create a vibrant product showcase image featuring a uploaded image in the center, surrounded by dynamic splashes of liquid or relevant material that complement the product.Use a clean, colorful background to make the product stand out.Include subtle elements related to the product's flavor,ingredients, or theme floating around to add context and visual interest. Ensure the produxt is sharp and in focus, with motion and energy conveyed through the splash effect, Also give me image to video prompt for same in JSON format: {textToImage:'',imageToVideo:''}";
 
+  
+const AVATAR_PROMPT = `Create a vibrant product showcase image featuring the
+uploaded product image being held naturally by the uploaded avatar
+image. Position the product clearly in the avatar's hands,
+making it the focal point of the scene. Surround the product
+with dynamic splashes of liquid or relevant materials that complement
+the product. Use a clean, colorful background to make the product stand out.
+Add subtle floating elements related to the product's flavor, ingredients,
+or theme for extra context and visual interest. Ensure both the avatar and
+product are sharp, well-lit, and in focus, while motion and energy are conveyed
+through the splash effects.Also give me image to video prompt for same
+in JSON format: {textToImage:'',imageToVideo:''}`
+
 /**
  * Defines the JSON schema that we expect Gemini to return.
  * This helps ensure we get a valid JSON object.
@@ -104,6 +117,7 @@ export async function POST(req: NextRequest) {
     const description = formData.get('description');
     const size = formData.get('size');
     const userEmail = formData.get('userEmail');
+    const avatar = formData?.get('avatar') as string;
     const userRef = collection(db, 'users');
     const q = query(userRef, where('userEmail', '==', userEmail));
     const querySnapshot = await getDocs(q);
@@ -185,7 +199,7 @@ export async function POST(req: NextRequest) {
           role: 'user',
           parts: [
             imagePart, // The image fetched from ImageKit
-            { text: USER_PROMPT }, // Your prompt
+            { text:avatar?.length>2?AVATAR_PROMPT: USER_PROMPT }, // Your prompt
           ],
         },
       ],
@@ -203,7 +217,8 @@ export async function POST(req: NextRequest) {
     const OPENROUTER_MODEL = 'openai/gpt-5-image-mini';
     const promptText = parsedPrompts?.textToImage || USER_PROMPT || '';
 
-
+    console.log('Sending to OpenRouter with prompt:', promptText)
+    console.log('Using product image URL:', productImageUrl);
     // ,// Send messages with image_url + text
     const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -225,17 +240,18 @@ export async function POST(req: NextRequest) {
                 type: 'image_url',
                 image_url: {
                   url: productImageUrl
-                }
+                },
+                ...(avatar?.length > 2 ? [{ type: 'input_image', image_url: avatar }] : [])
               }
             ],
           },
         ],
         modalities: ['image', 'text'],
-        max_tokens: 1000,
+        max_tokens: 60,
       }),
     });
     const orJs = await orRes.json();
-    // console.log('OpenRouter Response:', JSON.stringify(orJs, null, 2));
+    console.log('OpenRouter Response:', JSON.stringify(orJs, null, 2));
     // The generated image will be in the assistant message
     if (orJs.choices) {
       // console.log('Generated message from OpenRouter:', message);
@@ -266,7 +282,7 @@ export async function POST(req: NextRequest) {
             productImageUrl,
             status: 'completed',
             userInfo: userInfo?.credits - 5,
-            imageToVideoPrompt:parsedPrompts?.imageToVideo
+            imageToVideoPrompt: parsedPrompts?.imageToVideo
           });
 
           return NextResponse.json(finalProductImageUrl);

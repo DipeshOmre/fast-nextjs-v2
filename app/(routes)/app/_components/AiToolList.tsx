@@ -1,4 +1,6 @@
+"use client"
 import { Button } from '@/components/ui/button'
+import { useAuthContext } from '@/hooks/useAuthContext'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
@@ -24,6 +26,7 @@ const AiTools = [
   }
 ]
 function AiToolList() {
+  const {user}=useAuthContext();
   return (
     <div>
       <h2 className='font-bold text-2xl mb-2'>Creative AI Tool</h2>
@@ -34,7 +37,7 @@ function AiToolList() {
               <div>
                 <h2 className='font-bold text-2xl'>{tool.name}</h2>
                 <p className='opacity-60 mt-2'>{tool.desc}</p>
-                <Link href={tool.path}>
+                <Link href={user?tool.path:"/login"}>
                   <Button className='mt-4'> Create Now</Button>
                 </Link>
               </div>
